@@ -8,7 +8,7 @@ const workerRoutes = require('./workerRoutes');
 const supplierRoutes = require('./supplierRoutes');
 
 router.use('/auth', authRoutes);
-router.use('/users', authRoutes); // Requirement: /users/profile
+router.use('/users', authRoutes);
 router.use('/admin', adminRoutes);
 router.use('/manager', managerRoutes);
 router.use('/worker', workerRoutes);
