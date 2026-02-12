@@ -37,6 +37,16 @@ class SupplierController {
         }
     }
 
+    async getItemById(req, res) {
+        try {
+            const item = await ItemService.getItemById(req.params.id);
+            if (!item) return res.status(404).json({ message: 'Item not found' });
+            res.json(item);
+        } catch (error) {
+            res.status(400).json({ message: error.message });
+        }
+    }
+
     async pickupItem(req, res) {
         try {
             const item = await ItemService.getItemById(req.params.id);
