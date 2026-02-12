@@ -23,7 +23,9 @@ const api = {
                 localStorage.removeItem('token');
                 window.location.reload();
             }
-            throw new Error(data.message || 'Something went wrong');
+            let msg = data.message || 'Error occurred';
+            if (msg.length > 60) msg = msg.substring(0, 57) + '...';
+            throw new Error(msg);
         }
 
         return data;
@@ -37,12 +39,14 @@ const api = {
     },
 
     admin: {
-        getWarehouses: () => api.request('/warehouses'),
-        createWarehouse: (data) => api.request('/warehouses', { method: 'POST', body: JSON.stringify(data) }),
-        deleteWarehouse: (id) => api.request(`/warehouses/${id}`, { method: 'DELETE' }),
+        getWarehouses: () => api.request('/admin/warehouses'),
+        createWarehouse: (data) => api.request('/admin/warehouses', { method: 'POST', body: JSON.stringify(data) }),
+        deleteWarehouse: (id) => api.request(`/admin/warehouses/${id}`, { method: 'DELETE' }),
         registerManager: (data) => api.request('/admin/register-manager', { method: 'POST', body: JSON.stringify(data) }),
         getAllItems: () => api.request('/admin/all-items'),
-        getAllUsers: () => api.request('/admin/all-users')
+        getAllUsers: () => api.request('/admin/all-users'),
+        deleteUser: (id) => api.request(`/admin/users/${id}`, { method: 'DELETE' }),
+        getAuditLogs: () => api.request('/admin/audit-logs')
     },
 
     manager: {
@@ -50,18 +54,21 @@ const api = {
         getStaff: () => api.request('/manager/staff'),
         getItems: () => api.request('/manager/items'),
         getWarehouse: () => api.request('/manager/warehouse'),
-        deleteItem: (id) => api.request(`/resource/${id}`, { method: 'DELETE' })
+        deleteItem: (id) => api.request(`/manager/items/${id}`, { method: 'DELETE' }),
+        deleteWorker: (id) => api.request(`/manager/staff/${id}`, { method: 'DELETE' })
     },
 
     worker: {
         getPending: () => api.request('/worker/pending-items'),
-        updateStatus: (id, status) => api.request(`/resource/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
+        scanItem: (id, data) => api.request(`/worker/items/${id}/scan`, { method: 'PUT', body: JSON.stringify(data) }),
+        outgoingItem: (data) => api.request('/worker/items/outgoing', { method: 'POST', body: JSON.stringify(data) }),
         getInventory: () => api.request('/worker/inventory')
     },
 
     supplier: {
-        createItem: (data) => api.request('/resource', { method: 'POST', body: JSON.stringify(data) }),
-        getMyItems: () => api.request('/resource'),
-        pickupItem: (id) => api.request(`/resource/${id}/pickup`, { method: 'PUT' })
+        createItem: (data) => api.request('/supplier/items', { method: 'POST', body: JSON.stringify(data) }),
+        getMyItems: () => api.request('/supplier/items'),
+        pickupItem: (id) => api.request(`/supplier/items/${id}/pickup`, { method: 'PUT' }),
+        getMatchingWarehouses: (dims) => api.request(`/supplier/matching-warehouses?length=${dims.length}&width=${dims.width}&height=${dims.height}`)
     }
 };

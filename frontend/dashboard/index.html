@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Operations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body class="dark-mode">
+    <div id="app">
+        <nav id="navbar" class="glass">
+            <div class="nav-content">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <span>NEXUS</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" class="nav-item active" id="nav-ops"><i class="fas fa-microchip"></i>
+                        <span>Operations</span></a>
+                    <a href="#" class="nav-item hidden" id="nav-staff-link"><i class="fas fa-users-gear"></i>
+                        <span>Personnel</span></a>
+                    <a href="#" class="nav-item" id="nav-history-link"><i class="fas fa-clock-rotate-left"></i>
+                        <span>Ship History</span></a>
+                </div>
+                <div class="user-profile">
+                    <span id="user-role-badge" class="badge badge-shipped" style="margin-right: 10px;"></span>
+                    <span id="user-display-name">User</span>
+                    <button class="icon-btn" onclick="logout()"><i class="fas fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </nav>
+
+        <main id="main-content"></main>
+
+        <div id="modal-container" class="modal-overlay hidden">
+            <div class="modal glass">
+                <div class="modal-header">
+                    <h3 id="modal-title">Modal Title</h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div id="modal-content" class="modal-body"></div>
+            </div>
+        </div>
+
+        <div id="notification-container"></div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/worker.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        const state = { user: JSON.parse(localStorage.getItem('user')) };
+        const modalOverlay = document.getElementById('modal-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-content');
+
+        document.getElementById('user-display-name').textContent = state.user?.username || 'Employee';
+        document.getElementById('user-role-badge').textContent = state.user?.role.toUpperCase();
+
+        if (state.user?.role === 'manager') {
+            document.getElementById('nav-staff-link').classList.remove('hidden');
+        }
+
+        function switchView(linkId, renderFn) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(linkId).classList.add('active');
+            renderFn();
+        }
+
+        document.getElementById('nav-ops').onclick = () => switchView('nav-ops', renderOps);
+        document.getElementById('nav-staff-link').onclick = () => switchView('nav-staff-link', admin.renderStaff);
+        document.getElementById('nav-history-link').onclick = () => switchView('nav-history-link', renderHistory);
+
+        async function renderHistory() {
+            const main = document.getElementById('main-content');
+            const title = state.user.role === 'manager' ? 'Warehouse Logistics History' : 'My Activity Log';
+            main.innerHTML = `<h1>${title}</h1><div class="table-container glass"><table><thead><tr><th>Time</th><th>Action</th><th>Personnel</th><th>Details</th></tr></thead><tbody id="audit-logs"></tbody></table></div>`;
+            const logs = await api.admin.getAuditLogs();
+            document.getElementById('audit-logs').innerHTML = logs.map(l => {
+                const isDelete = l.action === 'ITEM_DELETED';
+                const isReject = l.action === 'ITEM_REJECTED' || (l.details?.refund > 0);
+                return `
+                <tr style="${isDelete ? 'color: var(--danger);' : ''}">
+                    <td style="font-size: 0.8rem; color: var(--text-dim)">${new Date(l.timestamp).toLocaleString()}</td>
+                    <td><span class="badge ${isDelete ? 'badge-danger' : 'badge-shipped'}">${l.action.replace('ITEM_', '')}</span></td>
+                    <td>${l.performedBy?.username || 'System'}</td>
+                    <td style="font-size: 0.85rem">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${l.details?.name}</strong>: 
+                                ${l.details?.msg || ''}
+                                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">
+                                    ${l.details?.accepted !== undefined ? `Accepted: ${l.details.accepted} | ` : ''}
+                                    ${l.details?.refund !== undefined ? `Refund: ${l.details.refund} | ` : ''}
+                                    ${l.details?.remaining !== undefined ? `Remaining: ${l.details.remaining}` : ''}
+                                    ${l.details?.quantityShipped !== undefined ? `Shipped: ${l.details.quantityShipped} | Remaining: ${l.details.remaining}` : ''}
+                                </div>
+                            </div>
+                            ${(isReject || isDelete) ? `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.7rem;" onclick="admin.showLogDetail('${l.id || l._id}')">View Report</button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `}).join('') || '<tr><td colspan="4" style="text-align:center">No history record found</td></tr>';
+        }
+
+        function closeModal() { modalOverlay.classList.add('hidden'); }
+        function logout() { localStorage.clear(); window.location.href = '../auth/index.html'; }
+
+        function renderOps() {
+            if (state.user.role === 'worker') worker.renderDashboard();
+            else if (state.user.role === 'manager') {
+                const main = document.getElementById('main-content');
+                main.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h1>Warehouse Items</h1>
+                        <span class="badge badge-shipped" style="cursor: pointer;" onclick="admin.showWhDetail('${state.user.warehouse_id}')">
+                            <i class="fas fa-warehouse"></i> My Warehouse Details
+                        </span>
+                    </div>
+                    <div class="table-container glass">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Qty</th>
+                                    <th>Supplier</th>
+                                    <th>Status</th>
+                                    <th>Volume</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manager-items"></tbody>
+                        </table>
+                    </div>`;
+                refreshManagerItems();
+            }
+        }
+
+        async function refreshManagerItems() {
+            try {
+                const items = await api.manager.getItems();
+                document.getElementById('manager-items').innerHTML = items.map(i => `
+                    <tr>
+                        <td>
+                            ${i.name}
+                            ${i.defects > 0 ? `<div style="font-size: 0.7rem; color: var(--danger);"><i class="fas fa-undo"></i> ${i.defects} Refund Storage</div>` : ''}
+                            ${i.status === 'rejected' || i.defects > 0 ? '' : ''}
+                        </td>
+                        <td>${i.quantity}</td>
+                        <td>${i.user_id?.username || 'N/A'}</td>
+                        <td><span class="badge badge-${i.status}">${i.status}</span></td>
+                        <td>${i.total_volume?.toFixed(2)}</td>
+                        <td><button class="icon-btn" style="color:var(--danger)" onclick="deleteItem('${i.id}')"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                `).join('');
+            } catch (e) { notify(e.message, 'danger'); }
+        }
+
+        window.deleteItem = async (id) => {
+            if (!confirm('Delete item?')) return;
+            try {
+                await api.manager.deleteItem(id);
+                refreshManagerItems();
+                notify('Deleted', 'success');
+            } catch (e) { notify(e.message, 'danger'); }
+        }
+
+        function notify(text, type = 'success') {
+            const container = document.getElementById('notification-container');
+            const el = document.createElement('div');
+            el.className = `glass fade-in`;
+            el.style.cssText = `padding: 0.8rem 1.5rem; border-radius: 8px; margin-top: 10px; border-right: 4px solid ${type === 'danger' ? 'var(--danger)' : 'var(--accent)'}; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); color: white; min-width: 210px;`;
+            el.innerHTML = text;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        if (!state.user || !['manager', 'worker'].includes(state.user.role)) logout();
+        renderOps();
+    </script>
+</body>
+
+</html>

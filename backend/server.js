@@ -12,7 +12,6 @@ const startServer = async () => {
         await mongoose.connect(MONGO_URI);
         console.log('Connected to MongoDB');
 
-        // Seed Super Admin if not exists
         const adminEmail = 'admin@admin.com';
         const existingAdmin = await User.findOne({ email: adminEmail });
 

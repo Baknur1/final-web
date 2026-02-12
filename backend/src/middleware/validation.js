@@ -41,6 +41,13 @@ const resourceSchemas = {
         shelf_length: Joi.number().required(),
         shelf_width: Joi.number().required(),
         shelf_height: Joi.number().required()
+    }),
+    scan: Joi.object({
+        quantity: Joi.number().min(0).required(),
+        defects: Joi.number().min(0).required(),
+        length: Joi.number().required(),
+        width: Joi.number().required(),
+        height: Joi.number().required()
     })
 };
 

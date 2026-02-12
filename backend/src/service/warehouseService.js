@@ -20,6 +20,15 @@ class WarehouseService {
     async registerStaff(staffData) {
         return await UserRepository.save(staffData);
     }
+
+    async getMatchingWarehouses(dimensions) {
+        const warehouses = await WarehouseRepository.findAll();
+        return warehouses.filter(w =>
+            w.shelf_length >= dimensions.length &&
+            w.shelf_width >= dimensions.width &&
+            w.shelf_height >= dimensions.height
+        );
+    }
 }
 
 module.exports = new WarehouseService();

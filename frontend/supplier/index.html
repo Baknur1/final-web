@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Supplier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body class="dark-mode">
+    <div id="app">
+        <nav id="navbar" class="glass">
+            <div class="nav-content">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <span>NEXUS</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" class="nav-item active" id="nav-items-link"><i class="fas fa-boxes-packing"></i>
+                        <span>My Items</span></a>
+                    <a href="#" class="nav-item" id="nav-history-link"><i class="fas fa-clock-rotate-left"></i>
+                        <span>Logistics History</span></a>
+                </div>
+                <div class="user-profile">
+                    <span id="user-display-name">Supplier</span>
+                    <button class="icon-btn" onclick="logout()"><i class="fas fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </nav>
+
+        <main id="main-content"></main>
+
+        <div id="modal-container" class="modal-overlay hidden">
+            <div class="modal glass">
+                <div class="modal-header">
+                    <h3 id="modal-title">Modal Title</h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div id="modal-content" class="modal-body"></div>
+            </div>
+        </div>
+
+        <div id="notification-container"></div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/admin.js"></script>
+    <script src="../js/supplier.js"></script>
+    <script>
+        const state = { user: JSON.parse(localStorage.getItem('user')) };
+        const modalOverlay = document.getElementById('modal-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-content');
+
+        document.getElementById('user-display-name').textContent = state.user?.username || 'Supplier';
+
+        function closeModal() { modalOverlay.classList.add('hidden'); }
+        function logout() { localStorage.clear(); window.location.href = '../auth/index.html'; }
+
+        function notify(text, type = 'success') {
+            const container = document.getElementById('notification-container');
+            const el = document.createElement('div');
+            el.className = `glass fade-in`;
+            el.style.cssText = `padding: 0.8rem 1.5rem; border-radius: 8px; margin-top: 10px; border-right: 4px solid ${type === 'danger' ? 'var(--danger)' : 'var(--accent)'}; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); color: white; min-width: 210px;`;
+            el.innerHTML = text;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        if (state.user?.role !== 'supplier') logout();
+
+        function switchView(linkId, renderFn) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(linkId).classList.add('active');
+            renderFn();
+        }
+
+        document.getElementById('nav-items-link').onclick = () => switchView('nav-items-link', supplier.renderInventory);
+        document.getElementById('nav-history-link').onclick = () => switchView('nav-history-link', renderHistory);
+
+        async function renderHistory() {
+            const main = document.getElementById('main-content');
+            main.innerHTML = `<h1>My Logistics History</h1><div class="table-container glass"><table><thead><tr><th>Time</th><th>Action</th><th>Personnel</th><th>Details</th></tr></thead><tbody id="audit-logs"></tbody></table></div>`;
+            const logs = await api.admin.getAuditLogs();
+            document.getElementById('audit-logs').innerHTML = logs.map(l => {
+                const isDelete = l.action === 'ITEM_DELETED';
+                const isReject = l.action === 'ITEM_REJECTED' || (l.details?.refund > 0);
+                return `
+                <tr style="${isDelete ? 'color: var(--danger);' : ''}">
+                    <td style="font-size: 0.8rem; color: var(--text-dim)">${new Date(l.timestamp).toLocaleString()}</td>
+                    <td><span class="badge ${isDelete ? 'badge-danger' : 'badge-shipped'}">${l.action.replace('ITEM_', '')}</span></td>
+                    <td>${l.performedBy?.username || 'System'}</td>
+                    <td style="font-size: 0.85rem">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${l.details?.name}</strong>: 
+                                ${l.details?.msg || ''}
+                                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">
+                                    ${l.details?.accepted !== undefined ? `Accepted: ${l.details.accepted} | ` : ''}
+                                    ${l.details?.refund !== undefined ? `Refund: ${l.details.refund} | ` : ''}
+                                    ${l.details?.remaining !== undefined ? `Remaining: ${l.details.remaining}` : ''}
+                                    ${l.details?.quantityShipped !== undefined ? `Shipped: ${l.details.quantityShipped} | Remaining: ${l.details.remaining}` : ''}
+                                </div>
+                            </div>
+                            ${(isReject || isDelete) ? `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.7rem;" onclick="admin.showLogDetail('${l.id || l._id}')">View Report</button>` : ''}
+                         </div>
+                    </td>
+                </tr>
+            `}).join('') || '<tr><td colspan="4" style="text-align:center">No history found</td></tr>';
+        }
+
+        supplier.renderInventory();
+    </script>
+</body>
+
+</html>

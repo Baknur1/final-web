@@ -8,23 +8,18 @@ const routes = require('./src/routes');
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// API Routes
 app.use('/api', routes);
 
-// Serve Static Frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// SPA support
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// Global Error Handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     const status = err.status || 500;

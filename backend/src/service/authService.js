@@ -10,7 +10,13 @@ class AuthService {
         }
 
         const cleanedData = { ...userData };
-        if (cleanedData.warehouse_id === 'undefined' || cleanedData.warehouse_id === 'null' || !cleanedData.warehouse_id) {
+        const role = cleanedData.role || 'supplier';
+
+        if ((role === 'manager' || role === 'worker') && (!cleanedData.warehouse_id || ['undefined', 'null', ''].includes(cleanedData.warehouse_id))) {
+            throw new Error('Warehouse assignment is mandatory for staff members');
+        }
+
+        if (['undefined', 'null', '', undefined].includes(cleanedData.warehouse_id)) {
             delete cleanedData.warehouse_id;
         }
 

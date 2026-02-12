@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Super Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body class="dark-mode">
+    <div id="app">
+        <nav id="navbar" class="glass">
+            <div class="nav-content">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <span>NEXUS</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" class="nav-item active" id="nav-warehouses-link"><i class="fas fa-warehouse"></i>
+                        <span>Warehouses</span></a>
+                    <a href="#" class="nav-item" id="nav-personnel-link"><i class="fas fa-users-gear"></i> <span>System
+                            Staff</span></a>
+                    <a href="#" class="nav-item" id="nav-items-link"><i class="fas fa-microchip"></i> <span>Global
+                            Inventory</span></a>
+                    <a href="#" class="nav-item" id="nav-history-link"><i class="fas fa-clock-rotate-left"></i>
+                        <span>Shipment
+                            History</span></a>
+                </div>
+                <div class="user-profile">
+                    <span id="user-display-name">Admin</span>
+                    <button class="icon-btn" onclick="logout()"><i class="fas fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </nav>
+
+        <main id="main-content"></main>
+
+        <div id="modal-container" class="modal-overlay hidden">
+            <div class="modal glass">
+                <div class="modal-header">
+                    <h3 id="modal-title">Modal Title</h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div id="modal-content" class="modal-body"></div>
+            </div>
+        </div>
+
+        <div id="notification-container"></div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        const state = { user: JSON.parse(localStorage.getItem('user')) };
+        const modalOverlay = document.getElementById('modal-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-content');
+
+        document.getElementById('user-display-name').textContent = state.user?.username || 'Super Admin';
+
+        function closeModal() { modalOverlay.classList.add('hidden'); }
+        function logout() { localStorage.clear(); window.location.href = '../auth/index.html'; }
+
+        function switchView(linkId, renderFn) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(linkId).classList.add('active');
+            renderFn();
+        }
+
+        document.getElementById('nav-warehouses-link').onclick = () => switchView('nav-warehouses-link', renderWarehouses);
+        document.getElementById('nav-personnel-link').onclick = () => switchView('nav-personnel-link', admin.renderStaff);
+        document.getElementById('nav-items-link').onclick = () => switchView('nav-items-link', renderGlobalItems);
+        document.getElementById('nav-history-link').onclick = () => switchView('nav-history-link', renderHistory);
+
+        async function renderHistory() {
+            const main = document.getElementById('main-content');
+            main.innerHTML = `<h1>Global Logistics History</h1><div class="table-container glass"><table><thead><tr><th>Time</th><th>Action</th><th>Personnel</th><th>Details</th></tr></thead><tbody id="audit-logs"></tbody></table></div>`;
+            const logs = await api.admin.getAuditLogs();
+            document.getElementById('audit-logs').innerHTML = logs.map(l => {
+                const isDelete = l.action === 'ITEM_DELETED';
+                const isReject = l.action === 'ITEM_REJECTED' || (l.details?.refund > 0);
+                return `
+                <tr style="${isDelete ? 'color: var(--danger);' : ''}">
+                    <td style="font-size: 0.8rem; color: var(--text-dim)">${new Date(l.timestamp).toLocaleString()}</td>
+                    <td><span class="badge ${isDelete ? 'badge-danger' : 'badge-shipped'}">${l.action.replace('ITEM_', '')}</span></td>
+                    <td>${l.performedBy?.username || 'System'} <span style="font-size: 0.7rem; color: var(--text-dim)">(${l.performedBy?.role})</span></td>
+                    <td style="font-size: 0.85rem">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${l.details?.name}</strong>: 
+                                ${l.details?.msg || ''}
+                                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">
+                                    ${l.details?.accepted !== undefined ? `Accepted: ${l.details.accepted} | ` : ''}
+                                    ${l.details?.refund !== undefined ? `Refund: ${l.details.refund} | ` : ''}
+                                    ${l.details?.remaining !== undefined ? `Remaining: ${l.details.remaining}` : ''}
+                                    ${l.details?.quantityShipped !== undefined ? `Shipped: ${l.details.quantityShipped} | Remaining: ${l.details.remaining}` : ''}
+                                </div>
+                            </div>
+                            ${(isReject || isDelete) ? `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.7rem;" onclick="admin.showLogDetail('${l.id || l._id}')">View Report</button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        async function renderWarehouses() {
+            const main = document.getElementById('main-content');
+            const [whs, items] = await Promise.all([api.admin.getWarehouses(), api.admin.getAllItems()]);
+            const refundItems = items.filter(i => i.defects > 0);
+
+            main.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h1>Warehouse Control</h1>
+                    <button class="btn btn-primary" onclick="showAddWarehouseModal()"><i class="fas fa-plus"></i> New Node</button>
+                </div>
+                
+                ${refundItems.length > 0 ? `
+                <div class="glass" style="margin-bottom: 2.5rem; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02); overflow: hidden;">
+                    <div style="padding: 1rem 1.5rem; background: rgba(239, 68, 68, 0.05); border-bottom: 1px solid rgba(239, 68, 68, 0.1); display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin:0; color: #f87171;"><i class="fas fa-biohazard"></i> Global Refund Queue</h4>
+                        <span class="badge badge-danger">${refundItems.length} Issues Pending</span>
+                    </div>
+                    <div class="table-container" style="background: transparent; border: none; box-shadow: none;">
+                        <table style="font-size: 0.85rem;">
+                            <thead><tr><th>Incident</th><th>Impact</th><th>Reason</th><th>Node</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${refundItems.map(i => `
+                                    <tr>
+                                        <td><strong>${i.name}</strong></td>
+                                        <td style="color: #f87171;">${i.defects} units</td>
+                                        <td style="font-style: italic; color: var(--text-dim); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${i.rejection_reason || 'N/A'}</td>
+                                        <td>${whs.find(w => w.id === (i.warehouse_id?._id || i.warehouse_id))?.name || 'N/A'}</td>
+                                        <td style="text-align: right;">
+                                            <button class="icon-btn" style="color:var(--primary);" onclick="admin.showItemDetail('${i.id}')"><i class="fas fa-file-invoice"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>` : ''}
+
+                <div class="grid" id="wh-grid"></div>
+            `;
+
+            document.getElementById('wh-grid').innerHTML = whs.map(w => {
+                const whItems = items.filter(i => (i.warehouse_id?._id || i.warehouse_id) === w.id);
+                const distinctTypes = new Set(whItems.map(i => i.name)).size;
+                return `
+                <div class="card glass">
+                    <div style="display:flex; justify-content:space-between; align-items: flex-start;">
+                        <h3 class="warehouse-link" onclick="admin.showWhDetail('${w.id}')">${w.name}</h3>
+                        <button class="icon-btn" style="color:var(--danger)" onclick="delWarehouse('${w.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <p style="color:var(--text-dim); font-size: 0.9rem; margin-bottom: 12px;">${w.address}</p>
+                    <div class="glass" style="padding: 10px; border-radius: 8px; font-size: 0.85rem; background: rgba(255,255,255,0.03);">
+                        <p><i class="fas fa-box"></i> <strong>Items:</strong> ${whItems.length}</p>
+                        <p><i class="fas fa-tags"></i> <strong>Types:</strong> ${distinctTypes}</p>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        async function renderGlobalItems() {
+            const main = document.getElementById('main-content');
+            main.innerHTML = `<h1>System-wide Inventory</h1><div class="table-container glass"><table><thead><tr><th>Item</th><th>Qty</th><th>Warehouse</th><th>Status</th><th>Cost</th></tr></thead><tbody id="global-items"></tbody></table></div>`;
+            const items = await api.admin.getAllItems();
+            document.getElementById('global-items').innerHTML = items.map(i => `
+                <tr>
+                    <td>
+                        ${i.name}
+                        ${i.defects > 0 ? `<div style="font-size: 0.7rem; color: var(--danger);"><i class="fas fa-undo"></i> ${i.defects} Refund Storage</div>` : ''}
+                        ${i.status === 'rejected' ? `<div class="warehouse-link" style="font-size: 0.7rem; color: var(--danger);" onclick="admin.showRejectionDetail('${i.id}')"><i class="fas fa-circle-exclamation"></i> Rejection Details</div>` : ''}
+                    </td>
+                    <td>${i.quantity}</td>
+                    <td class="warehouse-link" onclick="admin.showWhDetail('${i.warehouse_id?.id || i.warehouse_id}')">${i.warehouse_id?.name || 'N/A'}</td>
+                    <td><span class="badge badge-${i.status}">${i.status}</span></td>
+                    <td>$${i.storage_cost?.toFixed(2)}</td>
+                </tr>
+             `).join('');
+        }
+
+        function showAddWarehouseModal() {
+            modalTitle.textContent = 'Add Node';
+            modalBody.innerHTML = `
+                <form id="wh-form">
+                    <div class="form-group"><label>Name</label><input type="text" id="w-n" required></div>
+                    <div class="form-group"><label>Address</label><input type="text" id="w-a" required></div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px">
+                        <div class="form-group"><label>L</label><input type="number" id="w-l" required></div>
+                        <div class="form-group"><label>W</label><input type="number" id="w-w" required></div>
+                        <div class="form-group"><label>H</label><input type="number" id="sc-h" required></div>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%">Create</button>
+                </form>
+            `;
+            document.getElementById('wh-form').onsubmit = async (e) => {
+                e.preventDefault();
+                await api.admin.createWarehouse({
+                    name: document.getElementById('w-n').value,
+                    address: document.getElementById('w-a').value,
+                    shelf_length: document.getElementById('w-l').value,
+                    shelf_width: document.getElementById('w-w').value,
+                    shelf_height: document.getElementById('sc-h').value
+                });
+                closeModal();
+                renderWarehouses();
+            };
+            modalOverlay.classList.remove('hidden');
+        }
+
+        window.delWarehouse = async (id) => {
+            if (!confirm('Delete?')) return;
+            await api.admin.deleteWarehouse(id);
+            renderWarehouses();
+        }
+
+        function notify(text, type = 'success') {
+            const container = document.getElementById('notification-container');
+            const el = document.createElement('div');
+            el.className = `glass fade-in`;
+            el.style.cssText = `padding: 0.8rem 1.5rem; border-radius: 8px; margin-top: 10px; border-right: 4px solid ${type === 'danger' ? 'var(--danger)' : 'var(--accent)'}; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); color: white; min-width: 210px;`;
+            el.innerHTML = text;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        if (!state.user || state.user.role !== 'super_admin') logout();
+        renderWarehouses();
+    </script>
+</body>
+
+</html>

@@ -48,10 +48,10 @@ class ManagerController {
     async deleteItem(req, res) {
         try {
             const item = await ItemService.getItemById(req.params.id);
-            if (!item || item.warehouse_id !== req.user.warehouse_id) {
+            if (!item || item.warehouse_id.toString() !== req.user.warehouse_id.toString()) {
                 return res.status(403).json({ message: 'Forbidden: Item not in your warehouse' });
             }
-            await ItemService.deleteItem(req.params.id);
+            await ItemService.deleteItem(req.params.id, req.user.id);
             res.status(204).send();
         } catch (error) {
             res.status(400).json({ message: error.message });
@@ -62,6 +62,19 @@ class ManagerController {
         try {
             const warehouse = await WarehouseRepository.findById(req.user.warehouse_id);
             res.json(warehouse);
+        } catch (error) {
+            res.status(400).json({ message: error.message });
+        }
+    }
+
+    async deleteWorker(req, res) {
+        try {
+            const worker = await UserRepository.findById(req.params.id);
+            if (!worker || worker.warehouse_id.toString() !== req.user.warehouse_id.toString()) {
+                return res.status(403).json({ message: 'Forbidden: Worker not in your warehouse' });
+            }
+            await UserRepository.delete(req.params.id);
+            res.status(204).send();
         } catch (error) {
             res.status(400).json({ message: error.message });
         }

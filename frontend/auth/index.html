@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Auth</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="dark-mode">
+    <div id="app">
+        <main id="main-content" style="padding-top: 0; display: flex; align-items: center; justify-content: center; height: 100vh;">
+            <!-- Auth injected here -->
+        </main>
+        <div id="notification-container"></div>
+    </div>
+    <script src="../js/api.js"></script>
+    <script>
+        // Inline Auth Logic for simplicity in multi-page structure
+        const mainContent = document.getElementById('main-content');
+        
+        function renderAuth() {
+            mainContent.innerHTML = `
+                <div class="auth-container glass fade-in">
+                    <div class="auth-header">
+                        <i class="fas fa-cube fa-3x" style="color: var(--primary); margin-bottom: 1rem;"></i>
+                        <h1>Nexus Portal</h1>
+                        <p>Sign in to your account</p>
+                    </div>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%">Sign In</button>
+                    </form>
+                    <p style="text-align: center; margin-top: 1.5rem; color: var(--text-dim); font-size: 0.9rem;">
+                        Supplier registration? <a href="#" id="show-register" style="color: var(--primary); text-decoration: none;">Register Now</a>
+                    </p>
+                </div>
+            `;
+            document.getElementById('login-form').onsubmit = handleLogin;
+            document.getElementById('show-register').onclick = renderRegister;
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            try {
+                const res = await api.auth.login({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                });
+                localStorage.setItem('token', res.token);
+                localStorage.setItem('user', JSON.stringify(res.user));
+                
+                // Redirect based on role
+                const role = res.user.role;
+                if (role === 'super_admin') window.location.href = '../admin/index.html';
+                else if (role === 'supplier') window.location.href = '../supplier/index.html';
+                else window.location.href = '../dashboard/index.html';
+            } catch (err) { notify(err.message, 'danger'); }
+        }
+
+        function renderRegister() {
+            mainContent.innerHTML = `
+                <div class="auth-container glass fade-in">
+                    <div class="auth-header">
+                        <h1>Supplier Registration</h1>
+                        <p>Join the Nexus partner network</p>
+                    </div>
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label>Full name / Company</label>
+                            <input type="text" id="reg-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Business Email</label>
+                            <input type="email" id="reg-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Create Password</label>
+                            <input type="password" id="reg-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%">Register Account</button>
+                    </form>
+                    <p style="text-align: center; margin-top: 1.5rem; color: var(--text-dim); font-size: 0.9rem;">
+                        Back to <a href="#" id="show-login" style="color: var(--primary); text-decoration: none;">Sign In</a>
+                    </p>
+                </div>
+            `;
+            document.getElementById('register-form').onsubmit = handleRegister;
+            document.getElementById('show-login').onclick = renderAuth;
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            try {
+                await api.auth.register({
+                    username: document.getElementById('reg-username').value,
+                    email: document.getElementById('reg-email').value,
+                    password: document.getElementById('reg-password').value,
+                    role: 'supplier'
+                });
+                notify('Registration successful!', 'success');
+                setTimeout(renderAuth, 1500);
+            } catch (err) { notify(err.message, 'danger'); }
+        }
+
+        function notify(text, type = 'success') {
+            const container = document.getElementById('notification-container');
+            const el = document.createElement('div');
+            el.className = `glass fade-in`;
+            el.style.cssText = `padding: 0.8rem 1.5rem; border-radius: 8px; margin-top: 10px; border-right: 4px solid ${type === 'danger' ? 'var(--danger)' : 'var(--accent)'}; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); color: white; min-width: 210px;`;
+            el.innerHTML = text;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        renderAuth();
+    </script>
+</body>
+</html>
