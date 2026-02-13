@@ -191,9 +191,9 @@
                     <div class="form-group"><label>Name</label><input type="text" id="w-n" required></div>
                     <div class="form-group"><label>Address</label><input type="text" id="w-a" required></div>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px">
-                        <div class="form-group"><label>L</label><input type="number" id="w-l" required></div>
-                        <div class="form-group"><label>W</label><input type="number" id="w-w" required></div>
-                        <div class="form-group"><label>H</label><input type="number" id="sc-h" required></div>
+                        <div class="form-group"><label>L - Length</label><input type="number" id="w-l" placeholder="in meters" required></div>
+                        <div class="form-group"><label>W - Width</label><input type="number" id="w-w" placeholder="in meters" required></div>
+                        <div class="form-group"><label>H - Height</label><input type="number" id="w-h" placeholder="in meters" required></div>
                     </div>
                     <button class="btn btn-primary" style="width:100%">Create</button>
                 </form>
@@ -205,7 +205,7 @@
                     address: document.getElementById('w-a').value,
                     shelf_length: document.getElementById('w-l').value,
                     shelf_width: document.getElementById('w-w').value,
-                    shelf_height: document.getElementById('sc-h').value
+                    shelf_height: document.getElementById('w-h').value
                 });
                 closeModal();
                 renderWarehouses();
