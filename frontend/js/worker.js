@@ -73,7 +73,7 @@ const worker = {
                                 </td>
                                 <td>${item.quantity}</td>
                                 <td><span class="badge badge-${item.status}">${item.status}</span></td>
-                                <td>${item.total_volume?.toFixed(2)}</td>
+                                <td>${item.total_volume?.toFixed(2) || 'N/A'} m³</td>
                                 <td>${new Date(item.arrival_time || item.last_modified).toLocaleString()}</td>
                             </tr>
                         `).join('') || '<tr><td colspan="5" style="text-align:center">Empty inventory</td></tr>'}

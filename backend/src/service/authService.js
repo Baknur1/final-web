@@ -2,6 +2,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { UserRepository } = require('../repository');
 
+// Salt rounds for bcrypt hashing - higher = more secure but slower
+// bcrypt automatically generates and includes salt in the hash
+const SALT_ROUNDS = 12;
+
 class AuthService {
     async register(userData) {
         const existingUser = await UserRepository.findOne({ email: userData.email });
@@ -20,7 +24,7 @@ class AuthService {
             delete cleanedData.warehouse_id;
         }
 
-        const hashedPassword = await bcrypt.hash(cleanedData.password, 10);
+        const hashedPassword = await bcrypt.hash(cleanedData.password, SALT_ROUNDS);
         const user = await UserRepository.save({
             ...cleanedData,
             password: hashedPassword,
@@ -72,7 +76,7 @@ class AuthService {
         if (!user) throw new Error('User not found');
 
         if (updateData.password) {
-            updateData.password = await bcrypt.hash(updateData.password, 10);
+            updateData.password = await bcrypt.hash(updateData.password, SALT_ROUNDS);
         }
 
         const updated = await UserRepository.save({ ...user.toObject(), ...updateData });

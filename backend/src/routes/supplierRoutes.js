@@ -8,6 +8,7 @@ router.post('/items', isAuthenticated, isAuthorized(['supplier']), validate(reso
 router.get('/items', isAuthenticated, isAuthorized(['supplier', 'manager', 'super_admin']), SupplierController.getMyItems);
 router.get('/items/:id', isAuthenticated, isAuthorized(['supplier', 'manager', 'super_admin']), SupplierController.getItemById);
 router.put('/items/:id/pickup', isAuthenticated, isAuthorized(['supplier']), SupplierController.pickupItem);
+router.delete('/items/:id/retrieve', isAuthenticated, isAuthorized(['supplier']), SupplierController.retrieveItem);
 router.get('/matching-warehouses', isAuthenticated, isAuthorized(['supplier']), SupplierController.getMatchingWarehouses);
 
 module.exports = router;

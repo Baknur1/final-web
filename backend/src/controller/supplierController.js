@@ -63,6 +63,23 @@ class SupplierController {
             res.status(400).json({ message: error.message });
         }
     }
+
+    async retrieveItem(req, res) {
+        try {
+            const item = await ItemService.getItemById(req.params.id);
+            if (!item) return res.status(404).json({ message: 'Item not found' });
+
+            const itemUserId = item.user_id._id ? item.user_id._id.toString() : item.user_id.toString();
+            if (itemUserId !== req.user.id) {
+                return res.status(403).json({ message: 'Forbidden: This is not your item' });
+            }
+
+            await ItemService.retrieveItem(req.params.id, req.user.id);
+            res.json({ message: 'Item retrieved successfully' });
+        } catch (error) {
+            res.status(400).json({ message: error.message });
+        }
+    }
 }
 
 module.exports = new SupplierController();
