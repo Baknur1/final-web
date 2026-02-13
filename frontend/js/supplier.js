@@ -50,13 +50,14 @@ const supplier = {
                         ${isRejected || hasDefects ? '' : ''}
                     </td>
                     <td>${item.quantity}</td>
-                    <td>${item.length}x${item.width}x${item.height}</td>
-                    <td>${item.total_volume?.toFixed(2) || 'N/A'}</td>
+                    <td>${item.length}m × ${item.width}m × ${item.height}m</td>
+                    <td>${item.total_volume?.toFixed(2) || 'N/A'} m³</td>
                     <td class="warehouse-link" onclick="supplier.showWhDetail('${wh?.id}')">${wh?.name || 'N/A'}</td>
                     <td>$${item.storage_cost?.toFixed(2) || '0.00'}</td>
                     <td><span class="badge badge-${item.status}">${item.status}</span></td>
                     <td>
                         ${(item.status === 'accepted' && item.defects > 0) ? `<button class="btn btn-primary" onclick="supplier.pickup('${item.id}')" style="padding: 4px 10px; font-size: 0.8rem;">Pickup Refund</button>` : ''}
+                        ${(item.status === 'shipped') ? `<button class="btn btn-danger" onclick="supplier.retrieve('${item.id}')" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fas fa-undo"></i> Retrieve</button>` : ''}
                     </td>
                 </tr>
             `}).join('');
@@ -175,7 +176,7 @@ const supplier = {
             const vol = l * w * h;
             const totalVol = qty > 1 ? vol * qty : vol;
             preview.style.display = "block";
-            preview.textContent = `Estimated Storage Cost: $${(totalVol * 0.1).toFixed(2)}`;
+            preview.textContent = `Estimated Storage Cost: $${(totalVol * 0.1).toFixed(2)} (${totalVol.toFixed(2)} m³ × $0.1/m³)`;
 
             try {
                 const warehouses = await api.supplier.getMatchingWarehouses({ length: l, width: w, height: h });
@@ -211,6 +212,15 @@ const supplier = {
         try {
             await api.supplier.pickupItem(id);
             notify('Marked for pickup', 'success');
+            supplier.refreshItems();
+        } catch (e) { notify(e.message, 'danger'); }
+    },
+
+    retrieve: async (id) => {
+        if (!confirm('Are you sure you want to retrieve this shipped item? This action cannot be undone.')) return;
+        try {
+            await api.supplier.retrieveItem(id);
+            notify('Item retrieved successfully', 'success');
             supplier.refreshItems();
         } catch (e) { notify(e.message, 'danger'); }
     }

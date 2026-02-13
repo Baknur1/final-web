@@ -143,6 +143,30 @@ class ItemService {
 
         return await ItemRepository.delete(itemId);
     }
+
+    async retrieveItem(itemId, userId) {
+        const item = await ItemRepository.findById(itemId);
+        if (!item) throw new Error('Item not found');
+        
+        // Only allow retrieval of shipped items
+        if (item.status !== 'shipped') {
+            throw new Error(`Cannot retrieve item with status '${item.status}'. Only shipped items can be retrieved.`);
+        }
+
+        const { AuditLog } = require('../repository');
+        await AuditLog.create({
+            action: 'ITEM_RETRIEVED',
+            performedBy: userId,
+            details: { 
+                itemId, 
+                name: item.name, 
+                quantity: item.quantity,
+                msg: 'Supplier retrieved shipped item - removed from system' 
+            }
+        });
+
+        return await ItemRepository.delete(itemId);
+    }
 }
 
 module.exports = new ItemService();
