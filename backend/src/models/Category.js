@@ -16,7 +16,7 @@ const categorySchema = new mongoose.Schema({
         type: String,
         validate: {
             validator: function(v) {
-                if (!v) return true; // описание опциональное
+                if (!v) return true; 
                 return !v.startsWith('-') && v.trim().length > 0;
             },
             message: 'Description cannot start with "-" or be empty'

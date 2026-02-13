@@ -8,14 +8,12 @@ const managerRoutes = require('./managerRoutes');
 const workerRoutes = require('./workerRoutes');
 const supplierRoutes = require('./supplierRoutes');
 
-// Rate limit middleware: максимум 100 запросов за 15 минут
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 минут
-    max: 100, // лимит 100 запросов на IP
+    windowMs: 15 * 60 * 1000, 
+    max: 5, 
     message: 'Слишком много запросов с этого IP, пожалуйста войдите позже'
 });
 
-// Применяем rate limit ко всем маршрутам
 router.use(limiter);
 
 router.use('/auth', authRoutes);
