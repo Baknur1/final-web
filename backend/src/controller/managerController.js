@@ -5,7 +5,6 @@ const { UserRepository, WarehouseRepository } = require('../repository');
 class ManagerController {
     async registerWorker(req, res) {
         try {
-            // Use provided warehouse_id if super_admin, otherwise force manager's warehouse_id
             const warehouse_id = req.user.role === 'super_admin' ? req.body.warehouse_id : req.user.warehouse_id;
 
             const worker = await AuthService.register({

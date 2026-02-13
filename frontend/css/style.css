@@ -25,7 +25,6 @@ a {
     color: inherit;
 }
 
-/* Input Hygiene */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -93,7 +92,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Glassmorphism Classes */
 .glass {
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
@@ -117,7 +115,6 @@ body {
     color: var(--text-main);
 }
 
-/* Animations */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -146,7 +143,6 @@ body {
     animation: fadeIn 0.5s ease forwards;
 }
 
-/* Navbar */
 nav {
     position: fixed;
     top: 0;
@@ -216,7 +212,6 @@ nav {
     gap: 1rem;
 }
 
-/* Main Content */
 main {
     padding-top: 100px;
     padding-bottom: 2rem;
@@ -226,12 +221,10 @@ main {
     padding-inline: 2rem;
 }
 
-/* Utility Classes */
 .hidden {
     display: none !important;
 }
 
-/* Buttons */
 .btn {
     padding: 0.8rem 1.5rem;
     border-radius: 12px;
@@ -273,7 +266,6 @@ main {
     background: var(--glass-border);
 }
 
-/* Auth Pages */
 .auth-container {
     max-width: 450px;
     margin: 50px auto;
@@ -308,7 +300,6 @@ textarea {
     width: 100%;
     padding: 12px 16px;
     background: #0f172a;
-    /* Solid dark background for inputs */
     border: 1px solid var(--glass-border);
     border-radius: 8px;
     color: var(--text-main);
@@ -336,7 +327,6 @@ textarea:focus {
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-/* Prevent browser autofill from changing background color */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -363,7 +353,6 @@ option {
     padding: 10px;
 }
 
-/* Cards */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -380,7 +369,6 @@ option {
     transform: translateY(-5px);
 }
 
-/* Tables */
 .table-container {
     overflow-x: auto;
     margin-top: 1rem;
@@ -413,7 +401,6 @@ tr:last-child td {
     border-bottom: none;
 }
 
-/* Status Badges */
 .badge {
     padding: 4px 10px;
     border-radius: 6px;
@@ -442,7 +429,6 @@ tr:last-child td {
     color: #6366f1;
 }
 
-/* Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -483,7 +469,6 @@ tr:last-child td {
     cursor: pointer;
 }
 
-/* Loader */
 .loader {
     display: flex;
     justify-content: center;

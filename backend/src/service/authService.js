@@ -4,7 +4,7 @@ const { UserRepository } = require('../repository');
 const SALT_ROUNDS = 12;
 const FAILED_ATTEMPTS = new Map();
 const MAX_FAILED_ATTEMPTS = 7;
-const LOCK_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const LOCK_DURATION_MS = 5 * 60 * 1000;
 
 class AuthService {
     async register(userData) {
@@ -46,7 +46,6 @@ class AuthService {
 
         const user = await UserRepository.findOne({ email });
         if (!user) {
-            // increment failed attempts for unknown user/email
             const next = { count: (record.count || 0) + 1, lockedUntil: 0 };
             if (next.count >= MAX_FAILED_ATTEMPTS) {
                 next.lockedUntil = Date.now() + LOCK_DURATION_MS;
@@ -58,7 +57,6 @@ class AuthService {
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            // increment failed attempts
             const next = { count: (record.count || 0) + 1, lockedUntil: 0 };
             if (next.count >= MAX_FAILED_ATTEMPTS) {
                 next.lockedUntil = Date.now() + LOCK_DURATION_MS;
@@ -68,7 +66,6 @@ class AuthService {
             throw new Error('Invalid credentials');
         }
 
-        // successful login - reset attempts
         if (FAILED_ATTEMPTS.has(key)) FAILED_ATTEMPTS.delete(key);
 
         const token = jwt.sign(

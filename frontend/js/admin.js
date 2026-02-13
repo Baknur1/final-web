@@ -81,7 +81,6 @@ const admin = {
 
                 let sectionsHtml = '';
 
-                // 2. Staff by Warehouse (Moved Refund Queue to Dashboard)
                 sectionsHtml += Object.entries(grouped)
                     .filter(([_, group]) => group.staff.length > 0 || group.name !== 'Corporate / Unassigned')
                     .map(([id, group]) => `
@@ -111,7 +110,6 @@ const admin = {
                     </details>
                 `).join('');
 
-                // 3. Supplier Group
                 if (suppliers.length > 0) {
                     sectionsHtml += `
                     <details class="glass-dropdown" style="margin-bottom: 1rem;">

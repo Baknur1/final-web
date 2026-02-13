@@ -4,7 +4,6 @@ const AuthService = require('../service/authService');
 const { UserRepository } = require('../repository');
 
 class AdminController {
-    // Warehouse Management
     async createWarehouse(req, res) {
         try {
             const warehouse = await WarehouseService.createWarehouse(req.body);
@@ -32,7 +31,6 @@ class AdminController {
         }
     }
 
-    // Manager Registration
     async registerManager(req, res) {
         try {
             const manager = await AuthService.register({
@@ -45,7 +43,6 @@ class AdminController {
         }
     }
 
-    // Monitoring
     async getAllItems(req, res) {
         try {
             const items = await ItemService.getAllItems();

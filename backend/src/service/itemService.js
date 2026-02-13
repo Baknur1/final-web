@@ -148,7 +148,6 @@ class ItemService {
         const item = await ItemRepository.findById(itemId);
         if (!item) throw new Error('Item not found');
         
-        // Only allow retrieval of shipped items
         if (item.status !== 'shipped') {
             throw new Error(`Cannot retrieve item with status '${item.status}'. Only shipped items can be retrieved.`);
         }

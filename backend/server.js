@@ -10,13 +10,11 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/nexus_wms'
 const startServer = async () => {
     try {
         await mongoose.connect(MONGO_URI);
-        console.log('Connected to MongoDB');
 
         const adminEmail = 'admin@admin.com';
         const existingAdmin = await User.findOne({ email: adminEmail });
 
         if (!existingAdmin) {
-            console.log('Seeding super admin...');
             const hashedPassword = await bcrypt.hash('admin123', 10);
             await User.create({
                 username: 'Super Admin',
@@ -24,11 +22,9 @@ const startServer = async () => {
                 password: hashedPassword,
                 role: 'super_admin'
             });
-            console.log('Super admin created: admin@admin.com / admin123');
         }
 
         app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
         });
     } catch (error) {
         console.error('Server startup error:', error);
