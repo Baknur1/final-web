@@ -99,16 +99,16 @@ const supplier = {
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
-                        <label>Length</label>
-                        <input type="number" id="i-l" required>
+                        <label>L - Length</label>
+                        <input type="number" id="i-l" placeholder="in meters" required>
                     </div>
                     <div class="form-group">
-                        <label>Width</label>
-                        <input type="number" id="i-w" required>
+                        <label>W - Width</label>
+                        <input type="number" id="i-w" placeholder="in meters" required>
                     </div>
                     <div class="form-group">
-                        <label>Height</label>
-                        <input type="number" id="i-h" required>
+                        <label>H - Height</label>
+                        <input type="number" id="i-h" placeholder="in meters" required>
                     </div>
                 </div>
                 <div class="form-group">

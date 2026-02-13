@@ -124,16 +124,16 @@ const worker = {
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
-                        <label>Length</label>
-                        <input type="number" id="sc-l" value="${item.length}" required>
+                        <label>L - Length</label>
+                        <input type="number" id="sc-l" value="${item.length}" placeholder="in meters" required>
                     </div>
                     <div class="form-group">
-                        <label>Width</label>
-                        <input type="number" id="sc-w" value="${item.width}" required>
+                        <label>W - Width</label>
+                        <input type="number" id="sc-w" value="${item.width}" placeholder="in meters" required>
                     </div>
                     <div class="form-group">
-                        <label>Height</label>
-                        <input type="number" id="sc-h" value="${item.height}" required>
+                        <label>H - Height</label>
+                        <input type="number" id="sc-h" value="${item.height}" placeholder="in meters" required>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; user-select: none;">Submit Verification</button>
