@@ -4,7 +4,7 @@
     --bg-dark: #0f172a;
     --bg-card: rgba(30, 41, 59, 0.7);
     --text-main: #f8fafc;
-    --text-dim: #94a3b8;
+    --text-dim: #cbd5e1;
     --accent: #10b981;
     --danger: #ef4444;
     --glass-bg: rgba(15, 23, 42, 0.8);
@@ -18,6 +18,11 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Outfit', sans-serif;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
 }
 
 /* Input Hygiene */
@@ -36,9 +41,8 @@ input[type=number] {
 .warehouse-link {
     cursor: pointer;
     color: var(--primary);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    font-weight: 500;
+    text-decoration: none;
+    font-weight: 600;
 }
 
 .warehouse-link:hover {
@@ -96,6 +100,21 @@ body {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--shadow);
+}
+
+.glass i {
+    color: var(--primary);
+    margin-right: 8px;
+    opacity: 0.9;
+}
+
+.glass p {
+    color: var(--text-dim);
+    margin-bottom: 5px;
+}
+
+.glass strong {
+    color: var(--text-main);
 }
 
 /* Animations */
@@ -318,8 +337,21 @@ textarea:focus {
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-::placeholder {
-    color: rgba(148, 163, 184, 0.5);
+select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+}
+
+option {
+    background-color: #1e293b;
+    color: #f8fafc;
+    padding: 10px;
 }
 
 /* Cards */
@@ -415,7 +447,7 @@ tr:last-child td {
     justify-content: center;
 }
 
-.modal {
+.custom-modal {
     width: 90%;
     max-width: 600px;
     border-radius: 24px;

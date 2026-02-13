@@ -6,7 +6,7 @@ const worker = {
             <div class="fade-in">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h1>Pending Inspections</h1>
-                     <span class="badge badge-shipped" style="cursor: pointer;" onclick="admin.showWhDetail('${state.user.warehouse_id}')">
+                    <span class="badge badge-shipped" style="cursor: pointer;" onclick="admin.showWhDetail('${state.user.warehouse_id}')">
                         <i class="fas fa-warehouse"></i> My Warehouse
                     </span>
                 </div>
@@ -193,35 +193,47 @@ const worker = {
     },
 
     showOutgoingModal: async () => {
-        const inv = await api.worker.getInventory();
-        modalTitle.textContent = 'Ship Items Out';
-        modalBody.innerHTML = `
-            <form id="outgoing-form">
-                <div class="form-group">
-                    <label>Select Item from Stock</label>
-                    <select id="out-item" required>
-                        ${inv.map(i => `<option value="${i.id}">${i.name} (Available: ${i.quantity})</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Quantity to Ship</label>
-                    <input type="number" id="out-qty" min="1" required>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%">Dispatch Item</button>
-            </form>
-        `;
-        document.getElementById('outgoing-form').onsubmit = async (e) => {
-            e.preventDefault();
-            try {
-                await api.worker.outgoingItem({
-                    itemId: document.getElementById('out-item').value,
-                    quantity: document.getElementById('out-qty').value
-                });
-                modalOverlay.classList.add('hidden');
-                notify('Shipment successful', 'success');
-                worker.renderDashboard();
-            } catch (err) { notify(err.message, 'danger'); }
-        };
-        modalOverlay.classList.remove('hidden');
+        try {
+            const inv = await api.worker.getInventory();
+            if (!inv || inv.length === 0) {
+                notify('No items in stock to ship. Please verify pending items first.', 'danger');
+                return;
+            }
+
+            modalTitle.textContent = 'Ship Items Out';
+            modalBody.innerHTML = `
+                <form id="outgoing-form">
+                    <div class="form-group">
+                        <label>Select Item from Stock</label>
+                        <select id="out-item" required>
+                            <option value="" disabled selected>-- Choose an item to ship --</option>
+                            ${inv.map(i => `<option value="${i.id || i._id}">${i.name} (Available: ${i.quantity})</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity to Ship</label>
+                        <input type="number" id="out-qty" min="1" required placeholder="Enter amount...">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; user-select: none;">Dispatch Item</button>
+                </form>
+            `;
+            document.getElementById('outgoing-form').onsubmit = async (e) => {
+                e.preventDefault();
+                try {
+                    const qty = document.getElementById('out-qty').value;
+                    const itemId = document.getElementById('out-item').value;
+                    if (!itemId) throw new Error('Please select an item');
+
+                    await api.worker.outgoingItem({
+                        itemId: itemId,
+                        quantity: qty
+                    });
+                    modalOverlay.classList.add('hidden');
+                    notify('Shipment successful', 'success');
+                    worker.renderDashboard();
+                } catch (err) { notify(err.message, 'danger'); }
+            };
+            modalOverlay.classList.remove('hidden');
+        } catch (e) { notify('Error loading inventory', 'danger'); }
     }
 };
