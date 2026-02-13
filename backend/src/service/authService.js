@@ -1,10 +1,10 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { UserRepository } = require('../repository');
-
-// Salt rounds for bcrypt hashing - higher = more secure but slower
-// bcrypt automatically generates and includes salt in the hash
 const SALT_ROUNDS = 12;
+const FAILED_ATTEMPTS = new Map();
+const MAX_FAILED_ATTEMPTS = 7;
+const LOCK_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 class AuthService {
     async register(userData) {
@@ -37,15 +37,39 @@ class AuthService {
     }
 
     async login(email, password) {
+        const key = (email || '').toString().toLowerCase();
+        const record = FAILED_ATTEMPTS.get(key) || { count: 0, lockedUntil: 0 };
+        if (record.lockedUntil && record.lockedUntil > Date.now()) {
+            const mins = Math.ceil((record.lockedUntil - Date.now()) / 60000);
+            throw new Error(`Too many failed attempts. Please wait ${mins} minute(s)`);
+        }
+
         const user = await UserRepository.findOne({ email });
         if (!user) {
+            // increment failed attempts for unknown user/email
+            const next = { count: (record.count || 0) + 1, lockedUntil: 0 };
+            if (next.count >= MAX_FAILED_ATTEMPTS) {
+                next.lockedUntil = Date.now() + LOCK_DURATION_MS;
+                next.count = 0;
+            }
+            FAILED_ATTEMPTS.set(key, next);
             throw new Error('Invalid credentials');
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            // increment failed attempts
+            const next = { count: (record.count || 0) + 1, lockedUntil: 0 };
+            if (next.count >= MAX_FAILED_ATTEMPTS) {
+                next.lockedUntil = Date.now() + LOCK_DURATION_MS;
+                next.count = 0;
+            }
+            FAILED_ATTEMPTS.set(key, next);
             throw new Error('Invalid credentials');
         }
+
+        // successful login - reset attempts
+        if (FAILED_ATTEMPTS.has(key)) FAILED_ATTEMPTS.delete(key);
 
         const token = jwt.sign(
             {
